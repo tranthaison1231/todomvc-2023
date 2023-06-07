@@ -33,7 +33,7 @@ function createTodoItemEl({ value, id, completed }: Todo) {
 }
 
 async function App() {
-  const TODO_APP_URL = 'https://64106f42be7258e14529c12f.mockapi.io';
+  const TODO_APP_URL = import.meta.env.VITE_TODO_APP_URL;
   let todos: Todo[] = [];
   const inputEl = <HTMLInputElement>document.getElementById('input');
   const listEl = document.getElementById('list')!;
