@@ -38,7 +38,7 @@ function delegate(el: HTMLElement, selector: string, event: any, handler: any) {
 
 const filterNotCompletedTodos = (todos: Todo[]) => todos.filter(todo => !todo.completed)
 
-function createTodoItemEl({ value, id, completed }) {
+function createTodoItemEl({ value, id, completed }: Todo) {
   const li = document.createElement('li')
   li.dataset.id = id
   li.className = 'py-[16px] group px-[20px] border-solid border-b-2 border-gray-300 flex items-center justify-between'

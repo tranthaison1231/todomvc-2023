@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "check-types": "tsc --noEmit",
     "lint": "eslint --ext .tsx,.ts src/ --fix",
     "prepare": "husky install"
   },
