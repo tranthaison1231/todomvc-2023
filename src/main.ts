@@ -1,3 +1,7 @@
+import { type Todo, deleteTodo, updateTodo, fetchTodos, createTodo } from './api/todos'
+import { delegate } from './utils/delegate'
+import { getURLHash } from './utils/url'
+
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div id="title" class="text-center text-[100px] text-[#ead7d7]">todos</div>
   <input id="input" class="outline-none items-center py-[16px] px-[60px] w-full shadow-xl text-[24px]" type="text" placeholder="What need to be done?">
@@ -22,20 +26,6 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </footer>
 `
 
-interface Todo {
-  id: string
-  value: string
-  completed: boolean
-}
-
-const getURLHash = () => document.location.hash.replace(/^#\//, '')
-
-function delegate(el: HTMLElement, selector: string, event: any, handler: any) {
-  el.addEventListener(event, e => {
-    if (e.target.matches(selector)) handler(e, el)
-  })
-}
-
 const filterNotCompletedTodos = (todos: Todo[]) => todos.filter(todo => !todo.completed)
 
 function createTodoItemEl({ value, id, completed }: Todo) {
@@ -57,8 +47,6 @@ function createTodoItemEl({ value, id, completed }: Todo) {
 }
 
 async function App(): Promise<void> {
-  console.log('Hello --------------------')
-  const TODO_APP_URL: string = import.meta.env.VITE_TODO_APP_URL
   let todos: Todo[] = []
   const inputEl = <HTMLInputElement>document.getElementById('input')
   const listEl = document.getElementById('list')!
@@ -81,47 +69,11 @@ async function App(): Promise<void> {
     })
   }
 
-  const createTodo = async ({ value, completed }: Omit<Todo, 'id'>): Promise<Todo | undefined> => {
-    try {
-      const res = await fetch(`${TODO_APP_URL}/todos`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ value, completed })
-      })
-      const data = await res.json()
-      return data
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
-  const fetchTodos = async () => {
-    try {
-      const res = await fetch(`${TODO_APP_URL}/todos`)
-      const data = await res.json()
-      todos = data
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
-  const updateTodo = async ({ id, value, completed }: Todo) => {
-    try {
-      await fetch(`${TODO_APP_URL}/todos/${id}`, {
-        method: 'PUT',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ value, completed })
-      })
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
   inputEl.addEventListener('keyup', async event => {
     try {
       if ((event.key === 'Enter' || event.keyCode === 13) && inputEl.value.trim() !== '') {
-        const newTodo = await createTodo({ value: inputEl.value, completed: false }) // create item on server
-        newTodo && todos.push(newTodo) // create item on client
+        const { data } = await createTodo({ value: inputEl.value, completed: false }) // create item on server
+        data && todos.push(data) // create item on client
         eventTarget.dispatchEvent(new CustomEvent('save')) // render UI
       }
     } catch (error) {
@@ -134,7 +86,7 @@ async function App(): Promise<void> {
       const el = e.target.closest('[data-id]')
       const todo = todos.find(todo => todo.id === el.dataset.id)
       if (!todo) return
-      await updateTodo({ ...todo, completed: !todo.completed }) // update item on sever
+      await updateTodo({ ...todo, completed: !todo.completed })
       todos = todos.map(todo => (todo.id === el.dataset.id ? { ...todo, completed: !todo.completed } : todo)) // update item on client
       eventTarget.dispatchEvent(new CustomEvent('save')) // render ui
     } catch (error) {
@@ -144,9 +96,7 @@ async function App(): Promise<void> {
 
   delegate(listEl, '[data-todo="remove"]', 'click', async (e: any) => {
     const el = e.target.closest('[data-id]')
-    await fetch(`${TODO_APP_URL}/todos/${<string>el?.dataset?.id}`, {
-      method: 'DELETE'
-    })
+    await deleteTodo(<string>el?.dataset?.id)
     todos = todos.filter(todo => todo.id !== el.dataset.id)
     eventTarget.dispatchEvent(new CustomEvent('save'))
   })
@@ -172,7 +122,8 @@ async function App(): Promise<void> {
     renderTodos()
   })
 
-  await fetchTodos()
+  const { data } = await fetchTodos()
+  todos = data
   renderTodos()
 }
 
