@@ -1,5 +1,9 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  esbuild: {}
+  test: {
+    root: './src',
+    globals: true
+  }
 })
